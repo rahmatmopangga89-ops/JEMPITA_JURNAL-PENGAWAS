@@ -1,0 +1,1939 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#006837" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="JEMPITA" />
+  <meta name="description" content="JEMPITA - Jurnal Elektronik Pengawas Madrasah Kabupaten Pohuwato" />
+  <title>JEMPITA - Jurnal Elektronik Pengawas Madrasah Pohuwato</title>
+
+  <!-- Dynamic PWA Manifest via Data URI agar bisa diinstal di HP Android -->
+  <link rel="manifest" id="pwa-manifest" />
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            kemenag: {
+              DEFAULT: '#006837',
+              dark: '#004d29',
+              light: '#e8f5e9',
+              accent: '#1B5E20',
+            },
+            jempita: {
+              orange: '#F57C00',
+              orangeLight: '#FFF3E0',
+              orangeHover: '#E65100',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #e2e8f0;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Hide scrollbar for clean mobile look */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* Smooth transitions */
+    .fade-in {
+      animation: fadeIn 0.25s ease-out forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Print Styling khusus untuk Download PDF / Cetak Laporan Resmi */
+    @media print {
+      body {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      #app-shell {
+        max-width: 100% !important;
+        width: 100% !important;
+        box-shadow: none !important;
+        min-height: auto !important;
+      }
+      .no-print, header, nav, #toast-container, #modal-container {
+        display: none !important;
+      }
+      #main-content {
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
+      }
+      #print-area {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+      }
+      .print-table th, .print-table td {
+        border: 1px solid #000000 !important;
+        color: #000000 !important;
+        padding: 6px 8px !important;
+        font-size: 11pt !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex justify-center bg-slate-200 text-slate-800 antialiased">
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-[440px] flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Custom Modal Container (Pengganti alert() dan confirm()) -->
+  <div id="modal-container" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div id="modal-box" class="bg-white rounded-2xl w-full max-w-[380px] p-5 shadow-2xl border border-slate-100 fade-in">
+      <!-- Dynamic Modal Content -->
+    </div>
+  </div>
+
+  <!-- Mobile App Shell Container (Maks 480px di Desktop, Full Screen di HP Android) -->
+  <div id="app-shell" class="w-full max-w-[480px] min-h-screen bg-slate-50 shadow-2xl flex flex-col relative overflow-x-hidden">
+
+    <!-- ==================== HALAMAN AWAL (LOGIN & DAFTAR) ==================== -->
+    <div id="auth-screen" class="flex-1 flex flex-col bg-gradient-to-b from-[#006837] via-[#00552d] to-slate-50 min-h-screen">
+      
+      <!-- Top Decorative Header -->
+      <div class="pt-8 pb-6 px-6 text-center text-white relative">
+        <!-- Badge Instalasi Android -->
+        <div class="flex justify-between items-center mb-4">
+          <span class="inline-flex items-center gap-1.5 text-[11px] font-semibold bg-white/15 px-3 py-1 rounded-full backdrop-blur-xs border border-white/20">
+            <span class="w-2 h-2 rounded-full bg-orange-400 animate-pulse"></span>
+            Kemenag Kab. Pohuwato
+          </span>
+          <button id="btn-install-pwa" onclick="triggerInstallPWA()" class="hidden inline-flex items-center gap-1 text-[11px] font-semibold bg-[#F57C00] hover:bg-[#E65100] text-white px-3 py-1 rounded-full shadow-md transition">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i> Instal App
+          </button>
+        </div>
+
+        <!-- Logo Kementerian Agama + Simbol Buku & Pulpen -->
+        <div class="relative inline-flex items-center justify-center mb-3">
+          <div class="w-24 h-24 rounded-3xl bg-white p-2.5 shadow-xl flex items-center justify-center border-2 border-orange-400">
+            <!-- SVG Logo Kemenag -->
+            <div id="auth-kemenag-logo" class="w-full h-full"></div>
+          </div>
+          <!-- Simbol Buku & Pulpen Badge -->
+          <div class="absolute -bottom-2 -right-3 w-10 h-10 rounded-2xl bg-[#F57C00] text-white flex items-center justify-center shadow-lg border-2 border-white" title="Jurnal Buku & Pulpen">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+              <path d="m14.5 6.5 3 3"/>
+              <path d="M12 12l5.5-5.5a1.5 1.5 0 0 1 2.12 2.12L14 14.2 11 15l.8-3Z"/>
+            </svg>
+          </div>
+        </div>
+
+        <h1 class="text-3xl font-extrabold tracking-tight text-white drop-shadow-xs">JEMPITA</h1>
+        <p class="text-xs sm:text-sm text-emerald-100 font-medium mt-1 leading-snug">
+          Jurnal Elektronik Pengawas Madrasah<br/>Kabupaten Pohuwato
+        </p>
+      </div>
+
+      <!-- Card Form Login & Daftar -->
+      <div class="flex-1 bg-white rounded-t-[2rem] px-6 pt-6 pb-8 shadow-[0_-10px_30px_rgba(0,0,0,0.12)] flex flex-col">
+        
+        <!-- Tab Switcher Login / Daftar -->
+        <div class="grid grid-cols-2 bg-slate-100 p-1.5 rounded-2xl mb-6">
+          <button id="tab-login-btn" onclick="switchAuthTab('login')" class="py-2.5 text-sm font-bold rounded-xl bg-[#006837] text-white shadow-sm transition-all">
+            Masuk (Login)
+          </button>
+          <button id="tab-register-btn" onclick="switchAuthTab('register')" class="py-2.5 text-sm font-bold rounded-xl text-slate-600 hover:text-slate-900 transition-all">
+            Daftar Akun
+          </button>
+        </div>
+
+        <!-- FORM LOGIN -->
+        <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4 fade-in">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">User (Username)</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-3.5 flex items-center text-slate-400">
+                <i data-lucide="user" class="w-4 h-4"></i>
+              </span>
+              <input type="text" id="login-username" required placeholder="Masukkan username Anda"
+                class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#006837] focus:ring-2 focus:ring-[#006837]/20 transition" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Password</label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-3.5 flex items-center text-slate-400">
+                <i data-lucide="lock" class="w-4 h-4"></i>
+              </span>
+              <input type="password" id="login-password" required placeholder="Masukkan password Anda"
+                class="w-full pl-10 pr-11 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#006837] focus:ring-2 focus:ring-[#006837]/20 transition" />
+              <button type="button" onclick="togglePasswordVisibility('login-password', this)" class="absolute inset-y-0 right-3.5 flex items-center text-slate-400 hover:text-slate-600">
+                <i data-lucide="eye" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+          <button type="submit" class="w-full py-3.5 bg-[#006837] hover:bg-[#004d29] active:scale-[0.99] text-white font-bold rounded-xl shadow-lg shadow-[#006837]/30 transition flex items-center justify-center gap-2 text-sm mt-2">
+            <i data-lucide="log-in" class="w-4 h-4"></i>
+            Masuk ke Aplikasi
+          </button>
+
+          <!-- Tombol Demo Cepat -->
+          <div class="pt-3 border-t border-slate-100">
+            <p class="text-[11px] text-center text-slate-500 mb-2">Ingin langsung mencoba aplikasi?</p>
+            <button type="button" onclick="loginDemoAccount()" class="w-full py-2.5 bg-orange-50 hover:bg-orange-100 text-[#F57C00] border border-orange-200 font-semibold rounded-xl text-xs transition flex items-center justify-center gap-1.5">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+              Masuk dengan Akun Demo Pengawas
+            </button>
+          </div>
+        </form>
+
+        <!-- FORM DAFTAR -->
+        <form id="form-register" onsubmit="handleRegister(event)" class="hidden space-y-3.5 fade-in">
+          <!-- Mini Header dengan Logo Kemenag -->
+          <div class="flex items-center gap-3 bg-emerald-50/80 border border-emerald-200/80 p-3 rounded-xl mb-1">
+            <div id="reg-kemenag-logo" class="w-10 h-10 shrink-0"></div>
+            <div>
+              <p class="text-xs font-bold text-[#006837]">Registrasi Pengawas Madrasah</p>
+              <p class="text-[11px] text-slate-600">Kankemenag Kabupaten Pohuwato</p>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Nama Lengkap (beserta gelar)</label>
+            <input type="text" id="reg-fullname" required placeholder="Contoh: Drs. H. Ahmad Fauzi, M.Pd"
+              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#006837] focus:ring-2 focus:ring-[#006837]/20" />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">NIP</label>
+            <input type="text" id="reg-nip" required placeholder="Contoh: 197508172005011004"
+              class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#006837] focus:ring-2 focus:ring-[#006837]/20" />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Buat User</label>
+              <input type="text" id="reg-username" required placeholder="Username login"
+                class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#006837] focus:ring-2 focus:ring-[#006837]/20" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Buat Password</label>
+              <input type="password" id="reg-password" required placeholder="Password"
+                class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#006837] focus:ring-2 focus:ring-[#006837]/20" />
+            </div>
+          </div>
+
+          <button type="submit" class="w-full py-3.5 bg-[#F57C00] hover:bg-[#E65100] active:scale-[0.99] text-white font-bold rounded-xl shadow-lg shadow-orange-500/30 transition flex items-center justify-center gap-2 text-sm mt-2">
+            <i data-lucide="user-plus" class="w-4 h-4"></i>
+            Daftar & Simpan Akun
+          </button>
+        </form>
+
+        <!-- Footer Info -->
+        <div class="mt-auto pt-6 text-center">
+          <p class="text-[11px] text-slate-400">
+            &copy; 2026 JEMPITA &bull; Kementerian Agama Kab. Pohuwato
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== HALAMAN DALAM APLIKASI ==================== -->
+    <div id="main-app" class="hidden flex-1 flex flex-col min-h-screen bg-slate-50">
+      
+      <!-- Top App Bar -->
+      <header class="sticky top-0 z-30 bg-[#006837] text-white px-4 py-3 shadow-md flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-white p-1 flex items-center justify-center shadow-xs shrink-0">
+            <div id="header-kemenag-logo" class="w-full h-full"></div>
+          </div>
+          <div>
+            <div class="flex items-center gap-1.5">
+              <h1 class="font-extrabold text-base tracking-tight leading-none">JEMPITA</h1>
+              <span class="bg-[#F57C00] text-[10px] font-bold px-1.5 py-0.5 rounded-md">POHUWATO</span>
+            </div>
+            <p id="header-subtitle" class="text-[11px] text-emerald-100 mt-0.5 truncate max-w-[210px]">
+              Jurnal Elektronik Pengawas Madrasah
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <!-- Simbol Buku & Pulpen -->
+          <div class="w-8 h-8 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-orange-300" title="Jurnal Pengawas">
+            <i data-lucide="book-open-check" class="w-4 h-4"></i>
+          </div>
+          <!-- Quick Profile Button -->
+          <button onclick="navigateTo('akun')" class="w-8 h-8 rounded-xl bg-[#F57C00] hover:bg-[#E65100] flex items-center justify-center text-white font-bold text-xs shadow-xs" title="Akun Saya">
+            <i data-lucide="user" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Scrollable Content Area -->
+      <main id="main-content" class="flex-1 px-4 pt-4 pb-24 overflow-y-auto">
+
+        <!-- ==================== 1. MENU MADRASAH BINAAN ==================== -->
+        <section id="view-madrasah" class="space-y-4 fade-in">
+          <!-- Banner Ringkas -->
+          <div class="bg-gradient-to-r from-[#006837] to-[#1B5E20] rounded-2xl p-4 text-white shadow-md relative overflow-hidden">
+            <div class="relative z-10 flex items-center justify-between">
+              <div>
+                <p class="text-xs text-emerald-200 font-medium">Data Wilayah Kepengawasan</p>
+                <h2 class="text-lg font-bold mt-0.5">Madrasah Binaan</h2>
+                <p class="text-xs text-emerald-100 mt-1">Total: <span id="stat-madrasah-count" class="font-bold text-orange-300">0</span> Madrasah</p>
+              </div>
+              <button onclick="toggleFormMadrasah(true)" class="bg-[#F57C00] hover:bg-[#E65100] text-white text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-md flex items-center gap-1.5 transition active:scale-95">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                Tambah Madrasah
+              </button>
+            </div>
+          </div>
+
+          <!-- Sub-Menu Form Tambah / Edit Madrasah (Input Manual) -->
+          <div id="madrasah-form-card" class="hidden bg-white rounded-2xl p-4 shadow-md border border-emerald-100 fade-in">
+            <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+              <h3 id="madrasah-form-title" class="font-bold text-sm text-[#006837] flex items-center gap-2">
+                <i data-lucide="school" class="w-4 h-4 text-[#F57C00]"></i>
+                Tambah Madrasah Binaan
+              </h3>
+              <button type="button" onclick="toggleFormMadrasah(false)" class="text-slate-400 hover:text-slate-600 p-1">
+                <i data-lucide="x" class="w-4 h-4"></i>
+              </button>
+            </div>
+
+            <form id="form-madrasah" onsubmit="saveMadrasah(event)" class="space-y-3">
+              <input type="hidden" id="madrasah-edit-id" value="" />
+              
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Madrasah <span class="text-red-500">*</span></label>
+                <input type="text" id="madrasah-nama" required placeholder="Contoh: MTsN 1 Pohuwato"
+                  class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#006837]" />
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Kepala Madrasah <span class="text-red-500">*</span></label>
+                <input type="text" id="madrasah-kepala" required placeholder="Contoh: Drs. H. Suleman Daud, M.Pd"
+                  class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#006837]" />
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">NPSN <span class="text-red-500">*</span></label>
+                  <input type="text" id="madrasah-npsn" required placeholder="Contoh: 40501234"
+                    class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#006837]" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-700 mb-1">Tahun Akreditasi <span class="text-red-500">*</span></label>
+                  <input type="text" id="madrasah-akreditasi" required placeholder="Contoh: 2024 (A)"
+                    class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#006837]" />
+                </div>
+              </div>
+
+              <div class="flex gap-2 pt-2">
+                <button type="button" onclick="toggleFormMadrasah(false)" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs transition">
+                  Batal
+                </button>
+                <button type="submit" class="flex-1 py-2.5 bg-[#006837] hover:bg-[#004d29] text-white font-bold rounded-xl text-xs shadow-sm transition">
+                  Simpan Madrasah
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Daftar Informasi Madrasah Binaan -->
+          <div class="space-y-3" id="madrasah-list">
+            <!-- Rendered via JS -->
+          </div>
+        </section>
+
+        <!-- ==================== 2. MENU EKIN ATASAN ==================== -->
+        <section id="view-ekin" class="hidden space-y-4 fade-in">
+          <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+            <div class="flex items-center gap-2.5 mb-2">
+              <div class="w-9 h-9 rounded-xl bg-orange-100 text-[#F57C00] flex items-center justify-center shrink-0">
+                <i data-lucide="target" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h2 class="text-base font-bold text-slate-800">E-Kinerja (Ekin) Atasan</h2>
+                <p class="text-xs text-slate-500">Daftar RHK Atasan yang otomatis tampil di dropdown Isi Jurnal</p>
+              </div>
+            </div>
+
+            <!-- Form Input Ekin Atasan -->
+            <form id="form-ekin" onsubmit="saveEkin(event)" class="mt-3 space-y-2.5">
+              <input type="hidden" id="ekin-edit-id" value="" />
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">Uraian Rencana Hasil Kerja (Ekin Atasan)</label>
+                <textarea id="ekin-text" rows="2" required placeholder="Masukkan indikator / RHK Ekin Atasan..."
+                  class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#006837]"></textarea>
+              </div>
+              <div class="flex gap-2">
+                <button type="button" id="btn-cancel-ekin" onclick="resetEkinForm()" class="hidden px-4 py-2.5 bg-slate-100 text-slate-600 font-semibold rounded-xl text-xs">
+                  Batal
+                </button>
+                <button type="submit" id="btn-submit-ekin" class="flex-1 py-2.5 bg-[#006837] hover:bg-[#004d29] text-white font-bold rounded-xl text-xs shadow-sm flex items-center justify-center gap-1.5 transition">
+                  <i data-lucide="plus" class="w-4 h-4"></i>
+                  Tambah Ekin Atasan
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <!-- List Ekin Atasan -->
+          <div class="space-y-2.5" id="ekin-list">
+            <!-- Rendered via JS -->
+          </div>
+        </section>
+
+        <!-- ==================== 3. MENU ISI JURNAL ==================== -->
+        <section id="view-jurnal" class="hidden space-y-4 fade-in">
+          <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+            <div class="flex items-center gap-2.5 pb-3 mb-4 border-b border-slate-100">
+              <div class="w-9 h-9 rounded-xl bg-emerald-100 text-[#006837] flex items-center justify-center shrink-0">
+                <i data-lucide="pen-square" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h2 class="text-base font-bold text-slate-800">Isi Jurnal Kegiatan</h2>
+                <p class="text-xs text-slate-500">Catat pelaksanaan tugas kepengawasan madrasah</p>
+              </div>
+            </div>
+
+            <form id="form-jurnal" onsubmit="submitJurnal(event)" class="space-y-4">
+              
+              <!-- Tahun & Bulan -->
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Tahun <span class="text-red-500">*</span></label>
+                  <input type="number" id="jurnal-tahun" required min="2020" max="2099" value="2026"
+                    class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-[#006837]" />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Bulan <span class="text-red-500">*</span></label>
+                  <select id="jurnal-bulan" required
+                    class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold focus:outline-none focus:border-[#006837]">
+                    <option value="Januari">Januari</option>
+                    <option value="Februari">Februari</option>
+                    <option value="Maret">Maret</option>
+                    <option value="April">April</option>
+                    <option value="Mei">Mei</option>
+                    <option value="Juni">Juni</option>
+                    <option value="Juli">Juli</option>
+                    <option value="Agustus">Agustus</option>
+                    <option value="September">September</option>
+                    <option value="Oktober">Oktober</option>
+                    <option value="November" selected>November</option>
+                    <option value="Desember">Desember</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Hari / Tanggal Pelaksanaan -->
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Hari / Tanggal Pelaksanaan <span class="text-red-500">*</span></label>
+                <input type="date" id="jurnal-tanggal" required onchange="updateHariLabel()"
+                  class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#006837]" />
+                <p id="jurnal-hari-preview" class="text-xs font-semibold text-[#006837] mt-1.5 flex items-center gap-1">
+                  <i data-lucide="calendar-check" class="w-3.5 h-3.5 text-[#F57C00]"></i>
+                  <span>Hari: -</span>
+                </p>
+              </div>
+
+              <!-- Ekin Atasan (Otomatis terisi dari menu Ekin Atasan) -->
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-xs font-bold text-slate-700">Ekin Atasan <span class="text-red-500">*</span></label>
+                  <button type="button" onclick="navigateTo('ekin')" class="text-[11px] font-semibold text-[#F57C00] hover:underline">
+                    + Kelola Ekin
+                  </button>
+                </div>
+                <select id="jurnal-ekin" required
+                  class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#006837]">
+                  <!-- Diisi otomatis dari data Ekin Atasan -->
+                </select>
+              </div>
+
+              <!-- Kegiatan dan Tempat (2 kotak isian manual + tombol Tambah, Edit, Hapus) -->
+              <div class="bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200/80 space-y-3">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <label class="block text-xs font-bold text-slate-800">Kegiatan dan Tempat <span class="text-red-500">*</span></label>
+                    <p class="text-[11px] text-slate-500">Isi kegiatan & tempat, klik "+ Tambah" untuk baris baru</p>
+                  </div>
+                  <button type="button" onclick="addKegiatanPair()" class="bg-[#F57C00] hover:bg-[#E65100] text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow-xs flex items-center gap-1 transition active:scale-95">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                    Tambah
+                  </button>
+                </div>
+
+                <!-- Container Dinamis Pasangan Kotak Isian Kegiatan & Tempat -->
+                <div id="kegiatan-pairs-container" class="space-y-3">
+                  <!-- Rendered via JS -->
+                </div>
+              </div>
+
+              <!-- Dokumentasi (Upload Foto - Tidak Wajib) -->
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">
+                  Dokumentasi Foto <span class="text-slate-400 font-normal">(Opsional / Tidak wajib)</span>
+                </label>
+                <div class="border-2 border-dashed border-slate-300 rounded-2xl p-3 text-center bg-slate-50 hover:border-[#006837] transition relative">
+                  <input type="file" id="jurnal-foto" accept="image/*" onchange="handleFotoUpload(event)"
+                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                  <div id="foto-placeholder" class="py-2 flex flex-col items-center justify-center text-slate-500">
+                    <i data-lucide="camera" class="w-6 h-6 text-[#006837] mb-1"></i>
+                    <span class="text-xs font-medium">Ketuk untuk unggah / ambil foto kegiatan</span>
+                    <span class="text-[10px] text-slate-400 mt-0.5">Format JPG, PNG (Maks. 2MB)</span>
+                  </div>
+                  <div id="foto-preview-wrapper" class="hidden relative z-20">
+                    <img id="foto-preview-img" src="" alt="Pratinjau Dokumentasi" class="max-h-40 mx-auto rounded-xl object-cover shadow-xs" />
+                    <button type="button" onclick="clearFotoUpload()" class="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-red-600 bg-red-50 px-3 py-1 rounded-lg">
+                      <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Hapus Foto
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tombol Kirim -->
+              <button type="submit" class="w-full py-3.5 bg-[#006837] hover:bg-[#004d29] active:scale-[0.99] text-white font-bold rounded-xl shadow-lg shadow-[#006837]/25 transition flex items-center justify-center gap-2 text-sm">
+                <i data-lucide="send" class="w-4 h-4"></i>
+                Kirim Jurnal Kegiatan
+              </button>
+            </form>
+          </div>
+        </section>
+
+        <!-- ==================== 4. MENU REKAP ==================== -->
+        <section id="view-rekap" class="hidden space-y-4 fade-in">
+          
+          <!-- Filter & Tombol Aksi (Non-print) -->
+          <div class="no-print bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+            <div class="flex items-center justify-between">
+              <h2 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                <i data-lucide="file-spreadsheet" class="w-5 h-5 text-[#006837]"></i>
+                Rekap Jurnal Kegiatan
+              </h2>
+              <span id="rekap-total-badge" class="text-xs font-bold bg-emerald-100 text-[#006837] px-2.5 py-1 rounded-full">
+                0 Kegiatan
+              </span>
+            </div>
+
+            <!-- Filter Bulan & Tahun -->
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-500 mb-1">Filter Bulan</label>
+                <select id="filter-rekap-bulan" onchange="renderRekap()"
+                  class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#006837]">
+                  <option value="ALL">Semua Bulan</option>
+                  <option value="Januari">Januari</option>
+                  <option value="Februari">Februari</option>
+                  <option value="Maret">Maret</option>
+                  <option value="April">April</option>
+                  <option value="Mei">Mei</option>
+                  <option value="Juni">Juni</option>
+                  <option value="Juli">Juli</option>
+                  <option value="Agustus">Agustus</option>
+                  <option value="September">September</option>
+                  <option value="Oktober">Oktober</option>
+                  <option value="November">November</option>
+                  <option value="Desember">Desember</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-500 mb-1">Filter Tahun</label>
+                <input type="text" id="filter-rekap-tahun" oninput="renderRekap()" placeholder="Semua / 2026"
+                  class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#006837]" />
+              </div>
+            </div>
+
+            <!-- Tombol Simpan, Download PDF, dan Download Word -->
+            <div class="grid grid-cols-3 gap-2 pt-1">
+              <button type="button" onclick="saveRekapSnapshot()" class="py-2.5 px-2 bg-[#006837] hover:bg-[#004d29] text-white font-bold rounded-xl text-xs shadow-xs flex items-center justify-center gap-1.5 transition active:scale-95">
+                <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                Simpan
+              </button>
+              <button type="button" onclick="downloadRekapPDF()" class="py-2.5 px-2 bg-[#F57C00] hover:bg-[#E65100] text-white font-bold rounded-xl text-xs shadow-xs flex items-center justify-center gap-1.5 transition active:scale-95">
+                <i data-lucide="file-down" class="w-3.5 h-3.5"></i>
+                PDF
+              </button>
+              <button type="button" onclick="downloadRekapWord()" class="py-2.5 px-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs shadow-xs flex items-center justify-center gap-1.5 transition active:scale-95">
+                <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                Word
+              </button>
+            </div>
+          </div>
+
+          <!-- Area Dokumen Resmi Sesuai Format Kop Surat Kemenag Pohuwato -->
+          <div id="print-area" class="bg-white rounded-2xl p-4 shadow-md border border-slate-200 overflow-x-auto">
+            
+            <!-- KOP SURAT RESMI -->
+            <div class="min-w-[540px] border-b-[3px] border-double border-black pb-3 mb-4 flex items-center gap-3">
+              <div id="kop-kemenag-logo" class="w-16 h-16 shrink-0"></div>
+              <div class="flex-1 text-center leading-tight">
+                <p class="font-bold text-[13px] tracking-wide text-black uppercase">
+                  KANTOR KEMENTERIAN AGAMA KABUPATEN POHUWATO
+                </p>
+                <p class="text-[11px] text-black mt-0.5">
+                  Jl. Jendral Sudirman Komp. Blok Plan Perkantoran Marisa
+                </p>
+                <p class="text-[10px] text-black">
+                  Telepon (0443) 210385; Faksimili 210852
+                </p>
+                <p class="text-[10px] text-black">
+                  Website : www.pohuwato.kemenag.go.id ; e-mail : kabpohuwato@kemenag.go.id
+                </p>
+              </div>
+            </div>
+
+            <!-- JUDUL TABEL -->
+            <div class="min-w-[540px] text-center mb-3">
+              <h3 class="font-bold text-[13px] text-black uppercase underline">
+                JURNAL KEGIATAN PENGAWAS MADRASAH
+              </h3>
+              <p id="rekap-periode-label" class="text-[11px] font-semibold text-slate-700 mt-0.5">
+                Periode: Semua Waktu
+              </p>
+            </div>
+
+            <!-- TABEL JURNAL KEGIATAN -->
+            <div class="min-w-[540px]">
+              <table class="w-full border-collapse border border-black text-[11px] print-table">
+                <thead>
+                  <tr class="bg-emerald-50 text-black font-bold text-center">
+                    <th class="border border-black px-2 py-2 w-10">No</th>
+                    <th class="border border-black px-2 py-2 w-1/4">Ekin Atasan</th>
+                    <th class="border border-black px-2 py-2 w-1/3">Kegiatan</th>
+                    <th class="border border-black px-2 py-2 w-1/5">Tempat</th>
+                    <th class="border border-black px-2 py-2">Ket</th>
+                  </tr>
+                </thead>
+                <tbody id="rekap-table-body">
+                  <!-- Baris otomatis menyesuaikan jumlah kegiatan -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- KOLOM TANDA TANGAN ATASAN & PEGAWAI -->
+            <div class="min-w-[540px] mt-6 grid grid-cols-2 gap-8 text-[11px] text-black px-2">
+              <!-- Kiri: Atasan -->
+              <div>
+                <p class="font-semibold">Mengetahui,</p>
+                <p class="font-bold">Atasan</p>
+                <div class="h-14"></div>
+                <p id="rekap-atasan-nama" class="font-bold underline">........................................</p>
+                <p id="rekap-atasan-nip">NIP. ........................................</p>
+              </div>
+
+              <!-- Kanan: Pegawai (Pengawas) -->
+              <div>
+                <p class="font-semibold">Marisa, <span id="rekap-tanggal-ttd">24 November 2026</span></p>
+                <p class="font-bold">Pegawai</p>
+                <div class="h-14"></div>
+                <p id="rekap-pegawai-nama" class="font-bold underline">........................................</p>
+                <p id="rekap-pegawai-nip">NIP. ........................................</p>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- ==================== 5. MENU AKUN SAYA ==================== -->
+        <section id="view-akun" class="hidden space-y-4 fade-in">
+          <!-- Profile Header Card -->
+          <div class="bg-gradient-to-br from-[#006837] to-[#004d29] rounded-2xl p-5 text-white shadow-md flex items-center gap-3.5">
+            <div class="w-14 h-14 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center text-2xl font-extrabold text-orange-300 shrink-0">
+              <span id="akun-avatar-initial">P</span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <span class="text-[10px] font-bold uppercase tracking-wider bg-[#F57C00] px-2 py-0.5 rounded-md">
+                Pengawas Madrasah
+              </span>
+              <h2 id="akun-display-name" class="text-base font-bold truncate mt-1">Nama Pengawas</h2>
+              <p id="akun-display-nip" class="text-xs text-emerald-200 truncate">NIP. -</p>
+            </div>
+          </div>
+
+          <!-- Form Informasi Akun -->
+          <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+            <h3 class="text-sm font-bold text-slate-800 pb-2.5 mb-3 border-b border-slate-100 flex items-center gap-2">
+              <i data-lucide="id-card" class="w-4 h-4 text-[#006837]"></i>
+              Informasi Akun & Identitas Atasan
+            </h3>
+
+            <form id="form-akun" onsubmit="saveAccountInfo(event)" class="space-y-3.5">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Nama (Nama Lengkap Pengawas)</label>
+                <input type="text" id="akun-nama" required
+                  class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#006837]" />
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">User</label>
+                  <input type="text" id="akun-user" required
+                    class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#006837]" />
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Password</label>
+                  <div class="relative">
+                    <input type="password" id="akun-password" required
+                      class="w-full pl-3 pr-9 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#006837]" />
+                    <button type="button" onclick="togglePasswordVisibility('akun-password', this)" class="absolute inset-y-0 right-2.5 flex items-center text-slate-400">
+                      <i data-lucide="eye" class="w-4 h-4"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">NIP (NIP Pengawas)</label>
+                <input type="text" id="akun-nip" required
+                  class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#006837]" />
+              </div>
+
+              <div class="pt-2 border-t border-slate-100">
+                <p class="text-[11px] font-bold text-[#F57C00] uppercase tracking-wider mb-2">
+                  Identitas Atasan (Otomatis Muncul di Rekap)
+                </p>
+                <div class="space-y-3">
+                  <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Nama Atasan</label>
+                    <input type="text" id="akun-nama-atasan" placeholder="Contoh: H. Rais Abaidata, S.Ag., M.Pd"
+                      class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#006837]" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">NIP. (NIP Atasan)</label>
+                    <input type="text" id="akun-nip-atasan" placeholder="Contoh: 197005121998031003"
+                      class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-[#006837]" />
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" class="w-full py-3 bg-[#006837] hover:bg-[#004d29] text-white font-bold rounded-xl text-sm shadow-md flex items-center justify-center gap-2 transition">
+                <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                Simpan Perubahan Akun
+              </button>
+            </form>
+          </div>
+
+          <!-- Tombol Logout -->
+          <button type="button" onclick="confirmLogout()" class="w-full py-3 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold rounded-2xl text-sm flex items-center justify-center gap-2 transition">
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+            Keluar dari Aplikasi (Logout)
+          </button>
+        </section>
+
+      </main>
+
+      <!-- Bottom Navigation Bar (5 Menu Utama) -->
+      <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] bg-white border-t border-slate-200 px-1.5 py-1.5 z-30 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+        <div class="grid grid-cols-5 gap-1">
+          <button onclick="navigateTo('madrasah')" data-nav="madrasah" class="nav-btn flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-[#006837] bg-emerald-50 font-bold transition">
+            <i data-lucide="school" class="w-5 h-5 mb-0.5"></i>
+            <span class="text-[10px] leading-tight text-center">Madrasah</span>
+          </button>
+
+          <button onclick="navigateTo('ekin')" data-nav="ekin" class="nav-btn flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-slate-500 hover:text-[#006837] font-medium transition">
+            <i data-lucide="target" class="w-5 h-5 mb-0.5"></i>
+            <span class="text-[10px] leading-tight text-center">Ekin Atasan</span>
+          </button>
+
+          <button onclick="navigateTo('jurnal')" data-nav="jurnal" class="nav-btn flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-slate-500 hover:text-[#006837] font-medium transition">
+            <div class="w-7 h-7 -mt-3 mb-0.5 rounded-full bg-[#F57C00] text-white flex items-center justify-center shadow-md border-2 border-white">
+              <i data-lucide="pen-line" class="w-4 h-4"></i>
+            </div>
+            <span class="text-[10px] leading-tight text-center font-bold text-[#F57C00]">Isi Jurnal</span>
+          </button>
+
+          <button onclick="navigateTo('rekap')" data-nav="rekap" class="nav-btn flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-slate-500 hover:text-[#006837] font-medium transition">
+            <i data-lucide="file-spreadsheet" class="w-5 h-5 mb-0.5"></i>
+            <span class="text-[10px] leading-tight text-center">Rekap</span>
+          </button>
+
+          <button onclick="navigateTo('akun')" data-nav="akun" class="nav-btn flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-slate-500 hover:text-[#006837] font-medium transition">
+            <i data-lucide="user-circle" class="w-5 h-5 mb-0.5"></i>
+            <span class="text-[10px] leading-tight text-center">Akun Saya</span>
+          </button>
+        </div>
+      </nav>
+    </div>
+
+  </div>
+
+  <script>
+    // ==================== SVG LOGO KEMENTERIAN AGAMA ====================
+    const KEMENAG_SVG = `
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="w-full h-full">
+        <!-- Perisai Segi Lima Hijau dengan Garis Kuning -->
+        <polygon points="100,8 190,74 156,186 44,186 10,74" fill="#006837" stroke="#FFD600" stroke-width="7" stroke-linejoin="round"/>
+        <!-- Bintang Kuning di Atas -->
+        <polygon points="100,26 106,43 124,43 110,53 115,70 100,60 85,70 90,53 76,43 94,43" fill="#FFD600"/>
+        <!-- Tangkai Kapas (Kiri) -->
+        <path d="M84,148 C52,130 46,92 74,62" fill="none" stroke="#A5D6A7" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="66" cy="70" r="6" fill="#FFFFFF" stroke="#1B5E20" stroke-width="1.5"/>
+        <circle cx="58" cy="84" r="6" fill="#FFFFFF" stroke="#1B5E20" stroke-width="1.5"/>
+        <circle cx="55" cy="100" r="6" fill="#FFFFFF" stroke="#1B5E20" stroke-width="1.5"/>
+        <circle cx="60" cy="116" r="6" fill="#FFFFFF" stroke="#1B5E20" stroke-width="1.5"/>
+        <circle cx="70" cy="130" r="6" fill="#FFFFFF" stroke="#1B5E20" stroke-width="1.5"/>
+        <!-- Tangkai Padi (Kanan) -->
+        <path d="M116,148 C148,130 154,92 126,62" fill="none" stroke="#FFD600" stroke-width="3" stroke-linecap="round"/>
+        <ellipse cx="132" cy="68" rx="3.5" ry="6" transform="rotate(30 132 68)" fill="#FFD600"/>
+        <ellipse cx="140" cy="82" rx="3.5" ry="6" transform="rotate(20 140 82)" fill="#FFD600"/>
+        <ellipse cx="143" cy="98" rx="3.5" ry="6" transform="rotate(10 143 98)" fill="#FFD600"/>
+        <ellipse cx="139" cy="114" rx="3.5" ry="6" transform="rotate(-10 139 114)" fill="#FFD600"/>
+        <ellipse cx="130" cy="128" rx="3.5" ry="6" transform="rotate(-25 130 128)" fill="#FFD600"/>
+        <!-- Rekal / Penyangga Kitab -->
+        <polygon points="76,142 124,114 128,120 80,148" fill="#FFFFFF"/>
+        <polygon points="124,142 76,114 72,120 120,148" fill="#E0E0E0"/>
+        <!-- Kitab Suci Terbuka -->
+        <path d="M68,94 L100,104 L100,126 L68,116 Z" fill="#FFD600" stroke="#1B5E20" stroke-width="1.5"/>
+        <path d="M132,94 L100,104 L100,126 L132,116 Z" fill="#FFEA00" stroke="#1B5E20" stroke-width="1.5"/>
+        <line x1="74" y1="102" x2="94" y2="108" stroke="#1B5E20" stroke-width="1.5"/>
+        <line x1="74" y1="108" x2="94" y2="114" stroke="#1B5E20" stroke-width="1.5"/>
+        <line x1="126" y1="102" x2="106" y2="108" stroke="#1B5E20" stroke-width="1.5"/>
+        <line x1="126" y1="108" x2="106" y2="114" stroke="#1B5E20" stroke-width="1.5"/>
+        <!-- Pita IKHLAS BERAMAL -->
+        <path d="M36,154 Q100,172 164,154 L158,172 Q100,188 42,172 Z" fill="#FFFFFF" stroke="#1B5E20" stroke-width="1.5"/>
+        <text x="100" y="170" font-family="Arial, sans-serif" font-size="11.5" font-weight="bold" fill="#004d29" text-anchor="middle" letter-spacing="0.5">IKHLAS BERAMAL</text>
+      </svg>
+    `;
+
+    // ==================== STATE & STORAGE KEYS ====================
+    const STORAGE_KEYS = {
+      USERS: 'jempita_users_v1',
+      CURRENT_USER: 'jempita_current_user_v1',
+      MADRASAH: 'jempita_madrasah_v1',
+      EKIN: 'jempita_ekin_v1',
+      JURNAL: 'jempita_jurnal_v1'
+    };
+
+    let currentUser = null;
+    let madrasahList = [];
+    let ekinList = [];
+    let jurnalList = [];
+    let kegiatanFormItems = []; // Array of { id, kegiatan, tempat, isEditing }
+    let currentFotoBase64 = '';
+    let deferredPrompt = null;
+
+    // ==================== INISIALISASI APLIKASI ====================
+    window.addEventListener('DOMContentLoaded', () => {
+      // Inject Logo Kemenag SVG ke semua placeholder
+      ['auth-kemenag-logo', 'reg-kemenag-logo', 'header-kemenag-logo', 'kop-kemenag-logo'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = KEMENAG_SVG;
+      });
+
+      setupPWAManifest();
+      seedInitialData();
+      loadStateFromStorage();
+
+      // Set tanggal hari ini sebagai default di Isi Jurnal
+      const todayStr = new Date().toISOString().split('T')[0];
+      const tglInput = document.getElementById('jurnal-tanggal');
+      if (tglInput) {
+        tglInput.value = todayStr;
+        updateHariLabel();
+      }
+
+      // Cek sesi login aktif
+      if (currentUser) {
+        showMainApp();
+      } else {
+        showAuthScreen();
+      }
+
+      lucide.createIcons();
+    });
+
+    // ==================== PWA MANIFEST & INSTALL PROMPT ====================
+    function setupPWAManifest() {
+      const svgEncoded = encodeURIComponent(KEMENAG_SVG.trim());
+      const iconUrl = `data:image/svg+xml;utf8,${svgEncoded}`;
+      const manifest = {
+        name: "JEMPITA - Jurnal Elektronik Pengawas Madrasah Pohuwato",
+        short_name: "JEMPITA",
+        description: "Aplikasi Jurnal Elektronik Pengawas Madrasah Kabupaten Pohuwato",
+        start_url: ".",
+        display: "standalone",
+        background_color: "#006837",
+        theme_color: "#006837",
+        orientation: "portrait",
+        icons: [
+          { src: iconUrl, sizes: "192x192", type: "image/svg+xml", purpose: "any maskable" },
+          { src: iconUrl, sizes: "512x512", type: "image/svg+xml", purpose: "any maskable" }
+        ]
+      };
+      const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+      const manifestURL = URL.createObjectURL(manifestBlob);
+      document.getElementById('pwa-manifest').setAttribute('href', manifestURL);
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const installBtn = document.getElementById('btn-install-pwa');
+      if (installBtn) installBtn.classList.remove('hidden');
+    });
+
+    async function triggerInstallPWA() {
+      if (!deferredPrompt) {
+        showToast('Gunakan menu browser "Tambahkan ke Layar Utama" untuk menginstal di Android.', 'info');
+        return;
+      }
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        showToast('JEMPITA berhasil diinstal di perangkat Android Anda!', 'success');
+      }
+      deferredPrompt = null;
+      document.getElementById('btn-install-pwa').classList.add('hidden');
+    }
+
+    // ==================== SEED DATA AWAL ====================
+    function seedInitialData() {
+      // Seed Akun Demo Pengawas jika belum ada
+      if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
+        const defaultUsers = [
+          {
+            id: 'usr-demo-1',
+            nama: 'Drs. H. Mahmudin Lasimpala, M.Pd',
+            nip: '197204151999031002',
+            username: 'pengawas',
+            password: '123',
+            namaAtasan: 'H. Rais Abaidata, S.Ag., M.Pd',
+            nipAtasan: '197005121998031003'
+          }
+        ];
+        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(defaultUsers));
+      }
+
+      // Seed Madrasah Binaan contoh
+      if (!localStorage.getItem(STORAGE_KEYS.MADRASAH)) {
+        const defaultMadrasah = [
+          {
+            id: 'mdr-1',
+            nama: 'MTsN 1 Pohuwato',
+            kepala: 'Drs. H. Suleman Daud, M.Pd',
+            npsn: '40501891',
+            tahunAkreditasi: '2024 (Peringkat A)'
+          },
+          {
+            id: 'mdr-2',
+            nama: 'MAN 1 Pohuwato',
+            kepala: 'Dra. Hj. Fatmawati Yunus, M.Si',
+            npsn: '40501902',
+            tahunAkreditasi: '2023 (Peringkat A)'
+          },
+          {
+            id: 'mdr-3',
+            nama: 'MIN 1 Pohuwato',
+            kepala: 'Hasna Mooduto, S.Pd.I',
+            npsn: '60723411',
+            tahunAkreditasi: '2024 (Peringkat B)'
+          }
+        ];
+        localStorage.setItem(STORAGE_KEYS.MADRASAH, JSON.stringify(defaultMadrasah));
+      }
+
+      // Seed Ekin Atasan contoh
+      if (!localStorage.getItem(STORAGE_KEYS.EKIN)) {
+        const defaultEkin = [
+          {
+            id: 'ekin-1',
+            uraian: 'Meningkatnya kualitas pelaksanaan pendampingan manajerial dan akademik pada Madrasah Binaan di Kabupaten Pohuwato'
+          },
+          {
+            id: 'ekin-2',
+            uraian: 'Terlaksananya supervisi implementasi Kurikulum Merdeka dan perangkat pembelajaran guru madrasah'
+          },
+          {
+            id: 'ekin-3',
+            uraian: 'Tersusunnya laporan hasil evaluasi dan pemantauan Standar Nasional Pendidikan (SNP) pada Madrasah Binaan'
+          }
+        ];
+        localStorage.setItem(STORAGE_KEYS.EKIN, JSON.stringify(defaultEkin));
+      }
+
+      // Seed Contoh 1 Entri Jurnal agar Rekap langsung terlihat rapi
+      if (!localStorage.getItem(STORAGE_KEYS.JURNAL)) {
+        const defaultJurnal = [
+          {
+            id: 'jrn-1',
+            tahun: '2026',
+            bulan: 'November',
+            tanggal: '2026-11-24',
+            hariTanggal: 'Selasa, 24 November 2026',
+            ekinAtasan: 'Meningkatnya kualitas pelaksanaan pendampingan manajerial dan akademik pada Madrasah Binaan di Kabupaten Pohuwato',
+            items: [
+              {
+                kegiatan: 'Pendampingan penyusunan RKJM dan evaluasi diri madrasah bersama Kepala Madrasah',
+                tempat: 'MTsN 1 Pohuwato'
+              },
+              {
+                kegiatan: 'Supervisi administrasi pembelajaran dan modul ajar guru rumpun PAI',
+                tempat: 'MAN 1 Pohuwato'
+              }
+            ],
+            foto: ''
+          }
+        ];
+        localStorage.setItem(STORAGE_KEYS.JURNAL, JSON.stringify(defaultJurnal));
+      }
+    }
+
+    function loadStateFromStorage() {
+      try {
+        currentUser = JSON.parse(localStorage.getItem(STORAGE_KEYS.CURRENT_USER)) || null;
+        madrasahList = JSON.parse(localStorage.getItem(STORAGE_KEYS.MADRASAH)) || [];
+        ekinList = JSON.parse(localStorage.getItem(STORAGE_KEYS.EKIN)) || [];
+        jurnalList = JSON.parse(localStorage.getItem(STORAGE_KEYS.JURNAL)) || [];
+      } catch (err) {
+        console.error('Gagal memuat data:', err);
+      }
+    }
+
+    // ==================== AUTENTIKASI (LOGIN & DAFTAR) ====================
+    function switchAuthTab(tab) {
+      const loginForm = document.getElementById('form-login');
+      const regForm = document.getElementById('form-register');
+      const btnLogin = document.getElementById('tab-login-btn');
+      const btnReg = document.getElementById('tab-register-btn');
+
+      if (tab === 'login') {
+        loginForm.classList.remove('hidden');
+        regForm.classList.add('hidden');
+        btnLogin.className = 'py-2.5 text-sm font-bold rounded-xl bg-[#006837] text-white shadow-sm transition-all';
+        btnReg.className = 'py-2.5 text-sm font-bold rounded-xl text-slate-600 hover:text-slate-900 transition-all';
+      } else {
+        loginForm.classList.add('hidden');
+        regForm.classList.remove('hidden');
+        btnReg.className = 'py-2.5 text-sm font-bold rounded-xl bg-[#F57C00] text-white shadow-sm transition-all';
+        btnLogin.className = 'py-2.5 text-sm font-bold rounded-xl text-slate-600 hover:text-slate-900 transition-all';
+      }
+    }
+
+    function handleRegister(e) {
+      e.preventDefault();
+      const nama = document.getElementById('reg-fullname').value.trim();
+      const nip = document.getElementById('reg-nip').value.trim();
+      const username = document.getElementById('reg-username').value.trim();
+      const password = document.getElementById('reg-password').value.trim();
+
+      const users = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS)) || [];
+      if (users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
+        showToast('Username sudah terdaftar, silakan gunakan username lain.', 'error');
+        return;
+      }
+
+      const newUser = {
+        id: 'usr-' + Date.now(),
+        nama,
+        nip,
+        username,
+        password,
+        namaAtasan: '',
+        nipAtasan: ''
+      };
+
+      users.push(newUser);
+      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+
+      document.getElementById('form-register').reset();
+      switchAuthTab('login');
+      document.getElementById('login-username').value = username;
+      showToast('Pendaftaran berhasil! Silakan masuk dengan akun Anda.', 'success');
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value.trim();
+
+      const users = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS)) || [];
+      const found = users.find(u => u.username === username && u.password === password);
+
+      if (!found) {
+        showToast('User atau Password salah! Periksa kembali data Anda.', 'error');
+        return;
+      }
+
+      currentUser = found;
+      localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(currentUser));
+      showToast(`Selamat datang, ${currentUser.nama}!`, 'success');
+      showMainApp();
+    }
+
+    function loginDemoAccount() {
+      const users = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS)) || [];
+      const demo = users[0];
+      if (demo) {
+        currentUser = demo;
+        localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(currentUser));
+        showToast(`Masuk sebagai Demo: ${currentUser.nama}`, 'success');
+        showMainApp();
+      }
+    }
+
+    function showAuthScreen() {
+      document.getElementById('auth-screen').classList.remove('hidden');
+      document.getElementById('main-app').classList.add('hidden');
+      lucide.createIcons();
+    }
+
+    function showMainApp() {
+      document.getElementById('auth-screen').classList.add('hidden');
+      document.getElementById('main-app').classList.remove('hidden');
+      document.getElementById('header-subtitle').textContent = currentUser.nama;
+
+      // Render semua modul
+      renderMadrasahList();
+      renderEkinList();
+      populateEkinDropdown();
+      initKegiatanPairs();
+      renderRekap();
+      populateAccountForm();
+
+      // Default buka menu Madrasah Binaan
+      navigateTo('madrasah');
+      lucide.createIcons();
+    }
+
+    // ==================== NAVIGASI BOTTOM BAR ====================
+    function navigateTo(viewName) {
+      const views = ['madrasah', 'ekin', 'jurnal', 'rekap', 'akun'];
+      views.forEach(v => {
+        const el = document.getElementById(`view-${v}`);
+        if (el) {
+          if (v === viewName) el.classList.remove('hidden');
+          else el.classList.add('hidden');
+        }
+      });
+
+      // Update active state bottom nav
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        const target = btn.getAttribute('data-nav');
+        if (target === 'jurnal') return; // Tombol tengah punya style spesial
+        if (target === viewName) {
+          btn.classList.remove('text-slate-500', 'font-medium');
+          btn.classList.add('text-[#006837]', 'bg-emerald-50', 'font-bold');
+        } else {
+          btn.classList.add('text-slate-500', 'font-medium');
+          btn.classList.remove('text-[#006837]', 'bg-emerald-50', 'font-bold');
+        }
+      });
+
+      if (viewName === 'jurnal') {
+        populateEkinDropdown();
+      } else if (viewName === 'rekap') {
+        renderRekap();
+      } else if (viewName === 'akun') {
+        populateAccountForm();
+      }
+
+      document.getElementById('main-content').scrollTop = 0;
+      lucide.createIcons();
+    }
+
+    // ==================== 1. MODUL MADRASAH BINAAN ====================
+    function toggleFormMadrasah(show, editItem = null) {
+      const card = document.getElementById('madrasah-form-card');
+      const title = document.getElementById('madrasah-form-title');
+      const form = document.getElementById('form-madrasah');
+
+      if (!show) {
+        card.classList.add('hidden');
+        form.reset();
+        document.getElementById('madrasah-edit-id').value = '';
+        return;
+      }
+
+      card.classList.remove('hidden');
+      if (editItem) {
+        title.innerHTML = `<i data-lucide="edit-3" class="w-4 h-4 text-[#F57C00]"></i> Edit Madrasah Binaan`;
+        document.getElementById('madrasah-edit-id').value = editItem.id;
+        document.getElementById('madrasah-nama').value = editItem.nama;
+        document.getElementById('madrasah-kepala').value = editItem.kepala;
+        document.getElementById('madrasah-npsn').value = editItem.npsn;
+        document.getElementById('madrasah-akreditasi').value = editItem.tahunAkreditasi;
+      } else {
+        title.innerHTML = `<i data-lucide="school" class="w-4 h-4 text-[#F57C00]"></i> Tambah Madrasah Binaan`;
+        form.reset();
+        document.getElementById('madrasah-edit-id').value = '';
+      }
+      lucide.createIcons();
+    }
+
+    function saveMadrasah(e) {
+      e.preventDefault();
+      const editId = document.getElementById('madrasah-edit-id').value;
+      const nama = document.getElementById('madrasah-nama').value.trim();
+      const kepala = document.getElementById('madrasah-kepala').value.trim();
+      const npsn = document.getElementById('madrasah-npsn').value.trim();
+      const tahunAkreditasi = document.getElementById('madrasah-akreditasi').value.trim();
+
+      if (editId) {
+        const idx = madrasahList.findIndex(m => m.id === editId);
+        if (idx !== -1) {
+          madrasahList[idx] = { id: editId, nama, kepala, npsn, tahunAkreditasi };
+          showToast('Data Madrasah Binaan berhasil diperbarui!', 'success');
+        }
+      } else {
+        madrasahList.unshift({
+          id: 'mdr-' + Date.now(),
+          nama,
+          kepala,
+          npsn,
+          tahunAkreditasi
+        });
+        showToast('Madrasah Binaan baru berhasil ditambahkan!', 'success');
+      }
+
+      localStorage.setItem(STORAGE_KEYS.MADRASAH, JSON.stringify(madrasahList));
+      toggleFormMadrasah(false);
+      renderMadrasahList();
+    }
+
+    function renderMadrasahList() {
+      const container = document.getElementById('madrasah-list');
+      const countEl = document.getElementById('stat-madrasah-count');
+      countEl.textContent = madrasahList.length;
+
+      if (madrasahList.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-2xl p-8 text-center border border-dashed border-slate-300">
+            <i data-lucide="school" class="w-10 h-10 text-slate-300 mx-auto mb-2"></i>
+            <p class="text-sm font-semibold text-slate-600">Belum ada Madrasah Binaan</p>
+            <p class="text-xs text-slate-400 mt-1">Klik tombol "+ Tambah Madrasah" di atas untuk mengisi data.</p>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      container.innerHTML = madrasahList.map((m, index) => `
+        <div class="bg-white rounded-2xl p-4 shadow-xs border border-slate-100 hover:border-emerald-200 transition">
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-emerald-50 text-[#006837] font-bold text-xs flex items-center justify-center shrink-0 border border-emerald-100">
+                ${index + 1}
+              </div>
+              <div>
+                <h4 class="font-bold text-sm text-slate-800">${escapeHTML(m.nama)}</h4>
+                <span class="inline-block text-[10px] font-semibold bg-orange-50 text-[#F57C00] px-2 py-0.5 rounded-md mt-0.5">
+                  NPSN: ${escapeHTML(m.npsn)}
+                </span>
+              </div>
+            </div>
+            <div class="flex items-center gap-1">
+              <button onclick='editMadrasah("${m.id}")' class="p-2 rounded-xl bg-slate-50 hover:bg-emerald-50 text-slate-600 hover:text-[#006837] transition" title="Edit">
+                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+              </button>
+              <button onclick='deleteMadrasah("${m.id}")' class="p-2 rounded-xl bg-slate-50 hover:bg-red-50 text-slate-600 hover:text-red-600 transition" title="Hapus">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="mt-3 pt-2.5 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <span class="text-[10px] text-slate-400 block">Kepala Madrasah</span>
+              <span class="font-semibold text-slate-700">${escapeHTML(m.kepala)}</span>
+            </div>
+            <div>
+              <span class="text-[10px] text-slate-400 block">Tahun Akreditasi</span>
+              <span class="font-semibold text-[#006837]">${escapeHTML(m.tahunAkreditasi)}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    function editMadrasah(id) {
+      const item = madrasahList.find(m => m.id === id);
+      if (item) {
+        toggleFormMadrasah(true, item);
+        document.getElementById('main-content').scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    function deleteMadrasah(id) {
+      showConfirmModal(
+        'Hapus Madrasah Binaan?',
+        'Data madrasah yang dihapus tidak dapat dikembalikan.',
+        () => {
+          madrasahList = madrasahList.filter(m => m.id !== id);
+          localStorage.setItem(STORAGE_KEYS.MADRASAH, JSON.stringify(madrasahList));
+          renderMadrasahList();
+          showToast('Madrasah Binaan berhasil dihapus.', 'success');
+        }
+      );
+    }
+
+    // ==================== 2. MODUL EKIN ATASAN ====================
+    function saveEkin(e) {
+      e.preventDefault();
+      const editId = document.getElementById('ekin-edit-id').value;
+      const uraian = document.getElementById('ekin-text').value.trim();
+      if (!uraian) return;
+
+      if (editId) {
+        const idx = ekinList.findIndex(item => item.id === editId);
+        if (idx !== -1) {
+          ekinList[idx].uraian = uraian;
+          showToast('Ekin Atasan berhasil diperbarui!', 'success');
+        }
+      } else {
+        ekinList.push({
+          id: 'ekin-' + Date.now(),
+          uraian
+        });
+        showToast('Ekin Atasan berhasil ditambahkan!', 'success');
+      }
+
+      localStorage.setItem(STORAGE_KEYS.EKIN, JSON.stringify(ekinList));
+      resetEkinForm();
+      renderEkinList();
+      populateEkinDropdown();
+    }
+
+    function resetEkinForm() {
+      document.getElementById('ekin-edit-id').value = '';
+      document.getElementById('ekin-text').value = '';
+      document.getElementById('btn-cancel-ekin').classList.add('hidden');
+      document.getElementById('btn-submit-ekin').innerHTML = `<i data-lucide="plus" class="w-4 h-4"></i> Tambah Ekin Atasan`;
+      lucide.createIcons();
+    }
+
+    function editEkin(id) {
+      const item = ekinList.find(e => e.id === id);
+      if (!item) return;
+      document.getElementById('ekin-edit-id').value = item.id;
+      document.getElementById('ekin-text').value = item.uraian;
+      document.getElementById('btn-cancel-ekin').classList.remove('hidden');
+      document.getElementById('btn-submit-ekin').innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Update Ekin Atasan`;
+      lucide.createIcons();
+    }
+
+    function deleteEkin(id) {
+      showConfirmModal(
+        'Hapus Ekin Atasan?',
+        'Item ini akan dihapus dari pilihan dropdown Isi Jurnal.',
+        () => {
+          ekinList = ekinList.filter(e => e.id !== id);
+          localStorage.setItem(STORAGE_KEYS.EKIN, JSON.stringify(ekinList));
+          renderEkinList();
+          populateEkinDropdown();
+          showToast('Ekin Atasan dihapus.', 'success');
+        }
+      );
+    }
+
+    function renderEkinList() {
+      const container = document.getElementById('ekin-list');
+      if (ekinList.length === 0) {
+        container.innerHTML = `
+          <div class="bg-white rounded-2xl p-6 text-center border border-dashed border-slate-300">
+            <p class="text-xs text-slate-500">Belum ada data Ekin Atasan. Silakan tambahkan di atas.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = ekinList.map((item, idx) => `
+        <div class="bg-white rounded-2xl p-3.5 shadow-xs border border-slate-100 flex items-start justify-between gap-3">
+          <div class="flex items-start gap-2.5">
+            <span class="w-6 h-6 rounded-lg bg-orange-100 text-[#F57C00] font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+              ${idx + 1}
+            </span>
+            <p class="text-xs text-slate-700 leading-relaxed font-medium">${escapeHTML(item.uraian)}</p>
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            <button onclick='editEkin("${item.id}")' class="p-1.5 rounded-lg bg-slate-50 hover:bg-emerald-50 text-slate-500 hover:text-[#006837]" title="Edit">
+              <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+            </button>
+            <button onclick='deleteEkin("${item.id}")' class="p-1.5 rounded-lg bg-slate-50 hover:bg-red-50 text-slate-500 hover:text-red-600" title="Hapus">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    function populateEkinDropdown() {
+      const select = document.getElementById('jurnal-ekin');
+      if (!select) return;
+
+      if (ekinList.length === 0) {
+        select.innerHTML = `<option value="">-- Belum ada data Ekin Atasan --</option>`;
+        return;
+      }
+
+      select.innerHTML = ekinList.map((item, idx) => `
+        <option value="${escapeHTML(item.uraian)}">${idx + 1}. ${escapeHTML(item.uraian)}</option>
+      `).join('');
+    }
+
+    // ==================== 3. MODUL ISI JURNAL ====================
+    function updateHariLabel() {
+      const val = document.getElementById('jurnal-tanggal').value;
+      const labelEl = document.getElementById('jurnal-hari-preview');
+      if (!val) {
+        labelEl.innerHTML = `<i data-lucide="calendar-check" class="w-3.5 h-3.5 text-[#F57C00]"></i> <span>Hari: -</span>`;
+        lucide.createIcons();
+        return;
+      }
+
+      const formatted = formatIndonesianFullDate(val);
+      labelEl.innerHTML = `<i data-lucide="calendar-check" class="w-3.5 h-3.5 text-[#F57C00]"></i> <span>Pelaksanaan: <strong>${formatted}</strong></span>`;
+      lucide.createIcons();
+    }
+
+    function initKegiatanPairs() {
+      kegiatanFormItems = [
+        { id: 'pair-' + Date.now(), kegiatan: '', tempat: '', locked: false }
+      ];
+      renderKegiatanPairs();
+    }
+
+    function addKegiatanPair() {
+      kegiatanFormItems.push({
+        id: 'pair-' + Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+        kegiatan: '',
+        tempat: '',
+        locked: false
+      });
+      renderKegiatanPairs();
+    }
+
+    function updatePairField(id, field, value) {
+      const item = kegiatanFormItems.find(p => p.id === id);
+      if (item) {
+        item[field] = value;
+      }
+    }
+
+    function toggleLockPair(id) {
+      const item = kegiatanFormItems.find(p => p.id === id);
+      if (!item) return;
+      item.locked = !item.locked;
+      renderKegiatanPairs();
+      if (!item.locked) {
+        const inputEl = document.getElementById(`keg-input-${id}`);
+        if (inputEl) inputEl.focus();
+      }
+    }
+
+    function removeKegiatanPair(id) {
+      if (kegiatanFormItems.length <= 1) {
+        showToast('Minimal harus terdapat 1 kotak isian Kegiatan & Tempat.', 'error');
+        return;
+      }
+      kegiatanFormItems = kegiatanFormItems.filter(p => p.id !== id);
+      renderKegiatanPairs();
+    }
+
+    function renderKegiatanPairs() {
+      const container = document.getElementById('kegiatan-pairs-container');
+      container.innerHTML = kegiatanFormItems.map((item, idx) => `
+        <div class="bg-white p-3 rounded-xl border ${item.locked ? 'border-emerald-200 bg-emerald-50/30' : 'border-slate-200'} shadow-2xs space-y-2.5 relative">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-1.5">
+            <span class="text-[11px] font-bold text-[#006837]">
+              Item #${idx + 1}
+            </span>
+            <!-- Menu Edit & Hapus di samping kotak isian -->
+            <div class="flex items-center gap-1">
+              <button type="button" onclick="toggleLockPair('${item.id}')"
+                class="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-lg ${item.locked ? 'bg-orange-100 text-[#F57C00]' : 'bg-emerald-50 text-[#006837]'} transition"
+                title="${item.locked ? 'Edit Isian' : 'Kunci / Selesai Edit'}">
+                <i data-lucide="${item.locked ? 'pencil' : 'check'}" class="w-3 h-3"></i>
+                ${item.locked ? 'Edit' : 'OK'}
+              </button>
+              <button type="button" onclick="removeKegiatanPair('${item.id}')"
+                class="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition"
+                title="Hapus Baris">
+                <i data-lucide="trash-2" class="w-3 h-3"></i>
+                Hapus
+              </button>
+            </div>
+          </div>
+
+          <!-- Kotak Isian 1: Kegiatan -->
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Kegiatan ${idx + 1}</label>
+            <textarea id="keg-input-${item.id}" rows="2" required ${item.locked ? 'readonly' : ''}
+              oninput="updatePairField('${item.id}', 'kegiatan', this.value)"
+              placeholder="Tuliskan uraian kegiatan pengawasan..."
+              class="w-full px-3 py-2 text-xs rounded-xl border ${item.locked ? 'bg-slate-100 border-transparent text-slate-700' : 'bg-slate-50 border-slate-200 focus:border-[#006837]'} focus:outline-none">${escapeHTML(item.kegiatan)}</textarea>
+          </div>
+
+          <!-- Kotak Isian 2: Tempat -->
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Tempat ${idx + 1}</label>
+            <input type="text" required ${item.locked ? 'readonly' : ''}
+              value="${escapeHTML(item.tempat)}"
+              oninput="updatePairField('${item.id}', 'tempat', this.value)"
+              placeholder="Nama Madrasah / Lokasi pelaksanaan..."
+              class="w-full px-3 py-2 text-xs rounded-xl border ${item.locked ? 'bg-slate-100 border-transparent text-slate-700' : 'bg-slate-50 border-slate-200 focus:border-[#006837]'} focus:outline-none" />
+          </div>
+        </div>
+      `).join('');
+
+      lucide.createIcons();
+    }
+
+    function handleFotoUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (file.size > 2.5 * 1024 * 1024) {
+        showToast('Ukuran foto maksimal 2.5 MB.', 'error');
+        event.target.value = '';
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        currentFotoBase64 = e.target.result;
+        document.getElementById('foto-placeholder').classList.add('hidden');
+        document.getElementById('foto-preview-wrapper').classList.remove('hidden');
+        document.getElementById('foto-preview-img').src = currentFotoBase64;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearFotoUpload() {
+      currentFotoBase64 = '';
+      document.getElementById('jurnal-foto').value = '';
+      document.getElementById('foto-placeholder').classList.remove('hidden');
+      document.getElementById('foto-preview-wrapper').classList.add('hidden');
+      document.getElementById('foto-preview-img').src = '';
+    }
+
+    function submitJurnal(e) {
+      e.preventDefault();
+
+      const tahun = document.getElementById('jurnal-tahun').value.trim();
+      const bulan = document.getElementById('jurnal-bulan').value;
+      const tanggal = document.getElementById('jurnal-tanggal').value;
+      const ekinAtasan = document.getElementById('jurnal-ekin').value;
+
+      if (!ekinAtasan) {
+        showToast('Silakan pilih Ekin Atasan terlebih dahulu.', 'error');
+        return;
+      }
+
+      const validItems = kegiatanFormItems.filter(p => p.kegiatan.trim() !== '' && p.tempat.trim() !== '');
+      if (validItems.length === 0) {
+        showToast('Isi minimal satu pasangan Kegiatan dan Tempat.', 'error');
+        return;
+      }
+
+      const newEntry = {
+        id: 'jrn-' + Date.now(),
+        tahun,
+        bulan,
+        tanggal,
+        hariTanggal: formatIndonesianFullDate(tanggal),
+        ekinAtasan,
+        items: validItems.map(v => ({
+          kegiatan: v.kegiatan.trim(),
+          tempat: v.tempat.trim()
+        })),
+        foto: currentFotoBase64
+      };
+
+      jurnalList.push(newEntry);
+      localStorage.setItem(STORAGE_KEYS.JURNAL, JSON.stringify(jurnalList));
+
+      // Reset form jurnal
+      initKegiatanPairs();
+      clearFotoUpload();
+
+      showToast('Jurnal berhasil dikirim dan masuk ke tabel Rekap!', 'success');
+      navigateTo('rekap');
+    }
+
+    // ==================== 4. MODUL REKAP & EKSPOR PDF/WORD ====================
+    function renderRekap() {
+      const filterBulan = document.getElementById('filter-rekap-bulan').value;
+      const filterTahun = document.getElementById('filter-rekap-tahun').value.trim();
+
+      const filteredJurnal = jurnalList.filter(j => {
+        const matchBulan = filterBulan === 'ALL' || j.bulan === filterBulan;
+        const matchTahun = !filterTahun || j.tahun.includes(filterTahun);
+        return matchBulan && matchTahun;
+      });
+
+      // Update label periode
+      const periodeLabel = document.getElementById('rekap-periode-label');
+      const bulanText = filterBulan === 'ALL' ? 'Semua Bulan' : `Bulan ${filterBulan}`;
+      const tahunText = filterTahun ? `Tahun ${filterTahun}` : '';
+      periodeLabel.textContent = `Periode: ${bulanText} ${tahunText}`.trim();
+
+      // Flatten semua pasangan kegiatan agar nomor terurut otomatis 1, 2, 3...
+      const flatRows = [];
+      filteredJurnal.forEach(entry => {
+        entry.items.forEach(pair => {
+          flatRows.push({
+            jurnalId: entry.id,
+            ekinAtasan: entry.ekinAtasan,
+            kegiatan: pair.kegiatan,
+            tempat: pair.tempat,
+            hariTanggal: entry.hariTanggal,
+            foto: entry.foto
+          });
+        });
+      });
+
+      document.getElementById('rekap-total-badge').textContent = `${flatRows.length} Kegiatan`;
+
+      const tbody = document.getElementById('rekap-table-body');
+      if (flatRows.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="border border-black px-3 py-6 text-center text-slate-500 italic">
+              Belum ada data jurnal pada periode ini. Silakan isi jurnal pada menu "Isi Jurnal".
+            </td>
+          </tr>
+        `;
+      } else {
+        tbody.innerHTML = flatRows.map((row, idx) => `
+          <tr class="align-top">
+            <td class="border border-black px-2 py-2 text-center font-semibold">${idx + 1}</td>
+            <td class="border border-black px-2 py-2">${escapeHTML(row.ekinAtasan)}</td>
+            <td class="border border-black px-2 py-2">${escapeHTML(row.kegiatan)}</td>
+            <td class="border border-black px-2 py-2">${escapeHTML(row.tempat)}</td>
+            <td class="border border-black px-2 py-2">
+              <div class="font-medium">${escapeHTML(row.hariTanggal)}</div>
+              ${row.foto ? `<div class="mt-1 text-[9px] text-emerald-700 font-semibold">[Terlampir Foto Dokumentasi]</div>` : ''}
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      // Isi Otomatis Identitas Atasan & Pegawai dari Akun Saya
+      if (currentUser) {
+        document.getElementById('rekap-atasan-nama').textContent = currentUser.namaAtasan || '........................................';
+        document.getElementById('rekap-atasan-nip').textContent = `NIP. ${currentUser.nipAtasan || '........................................'}`;
+
+        document.getElementById('rekap-pegawai-nama').textContent = currentUser.nama || '........................................';
+        document.getElementById('rekap-pegawai-nip').textContent = `NIP. ${currentUser.nip || '........................................'}`;
+      }
+
+      // Tanggal TTD hari ini
+      const todayFormatted = formatIndonesianDateOnly(new Date().toISOString().split('T')[0]);
+      document.getElementById('rekap-tanggal-ttd').textContent = todayFormatted;
+    }
+
+    function saveRekapSnapshot() {
+      localStorage.setItem(STORAGE_KEYS.JURNAL, JSON.stringify(jurnalList));
+      showToast('Arsip Rekap Jurnal berhasil disimpan di perangkat!', 'success');
+    }
+
+    function downloadRekapPDF() {
+      showToast('Menyiapkan dokumen PDF resmi...', 'info');
+      setTimeout(() => {
+        window.print();
+      }, 300);
+    }
+
+    function downloadRekapWord() {
+      const printArea = document.getElementById('print-area');
+      const filterBulan = document.getElementById('filter-rekap-bulan').value;
+      const filterTahun = document.getElementById('filter-rekap-tahun').value.trim() || '2026';
+
+      // Buat dokumen HTML-to-Word (.doc) yang kompatibel penuh dengan Microsoft Word
+      const wordHTML = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office'
+              xmlns:w='urn:schemas-microsoft-com:office:word'
+              xmlns='http://www.w3.org/TR/REC-html40'>
+        <head>
+          <meta charset='utf-8'>
+          <title>Jurnal Kegiatan Pengawas Madrasah</title>
+          <style>
+            body { font-family: 'Times New Roman', serif; font-size: 11pt; color: #000; }
+            .kop-table { width: 100%; border-bottom: 3px double #000; margin-bottom: 12px; padding-bottom: 6px; }
+            .kop-title { font-size: 13pt; font-weight: bold; text-transform: uppercase; margin: 0; }
+            .kop-sub { font-size: 10pt; margin: 2px 0; }
+            .judul { text-align: center; font-weight: bold; font-size: 12pt; text-decoration: underline; margin: 12px 0 4px 0; }
+            .periode { text-align: center; font-size: 10pt; margin-bottom: 12px; }
+            .jurnal-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+            .jurnal-table th, .jurnal-table td { border: 1px solid #000; padding: 6px 8px; vertical-align: top; font-size: 10.5pt; }
+            .jurnal-table th { background-color: #e8f5e9; font-weight: bold; text-align: center; }
+            .ttd-table { width: 100%; margin-top: 28px; border: none; }
+            .ttd-table td { width: 50%; vertical-align: top; font-size: 11pt; }
+          </style>
+        </head>
+        <body>
+          <table class="kop-table">
+            <tr>
+              <td style="text-align: center;">
+                <p class="kop-title">KANTOR KEMENTERIAN AGAMA KABUPATEN POHUWATO</p>
+                <p class="kop-sub">Jl. Jendral Sudirman Komp. Blok Plan Perkantoran Marisa</p>
+                <p class="kop-sub">Telepon (0443) 210385; Faksimili 210852</p>
+                <p class="kop-sub">Website : www.pohuwato.kemenag.go.id ; e-mail : kabpohuwato@kemenag.go.id</p>
+              </td>
+            </tr>
+          </table>
+
+          <div class="judul">JURNAL KEGIATAN PENGAWAS MADRASAH</div>
+          <div class="periode">${document.getElementById('rekap-periode-label').textContent}</div>
+
+          <table class="jurnal-table">
+            <thead>
+              <tr>
+                <th style="width: 40px;">No</th>
+                <th style="width: 25%;">Ekin Atasan</th>
+                <th style="width: 33%;">Kegiatan</th>
+                <th style="width: 20%;">Tempat</th>
+                <th>Ket</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${document.getElementById('rekap-table-body').innerHTML}
+            </tbody>
+          </table>
+
+          <table class="ttd-table">
+            <tr>
+              <td>
+                Mengetahui,<br/>
+                <strong>Atasan</strong><br/><br/><br/><br/>
+                <u><strong>${escapeHTML(currentUser?.namaAtasan || '........................................')}</strong></u><br/>
+                NIP. ${escapeHTML(currentUser?.nipAtasan || '........................................')}
+              </td>
+              <td>
+                Marisa, ${document.getElementById('rekap-tanggal-ttd').textContent}<br/>
+                <strong>Pegawai</strong><br/><br/><br/><br/>
+                <u><strong>${escapeHTML(currentUser?.nama || '........................................')}</strong></u><br/>
+                NIP. ${escapeHTML(currentUser?.nip || '........................................')}
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `;
+
+      const blob = new Blob(['\ufeff', wordHTML], { type: 'application/msword' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const fileNameBulan = filterBulan === 'ALL' ? 'Semua' : filterBulan;
+      link.download = `Rekap_Jurnal_Pengawas_${fileNameBulan}_${filterTahun}.doc`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      showToast('File Microsoft Word (.doc) berhasil diunduh!', 'success');
+    }
+
+    // ==================== 5. MODUL AKUN SAYA ====================
+    function populateAccountForm() {
+      if (!currentUser) return;
+      document.getElementById('akun-avatar-initial').textContent = (currentUser.nama || 'P').charAt(0).toUpperCase();
+      document.getElementById('akun-display-name').textContent = currentUser.nama;
+      document.getElementById('akun-display-nip').textContent = `NIP. ${currentUser.nip || '-'}`;
+
+      document.getElementById('akun-nama').value = currentUser.nama || '';
+      document.getElementById('akun-user').value = currentUser.username || '';
+      document.getElementById('akun-password').value = currentUser.password || '';
+      document.getElementById('akun-nip').value = currentUser.nip || '';
+      document.getElementById('akun-nama-atasan').value = currentUser.namaAtasan || '';
+      document.getElementById('akun-nip-atasan').value = currentUser.nipAtasan || '';
+    }
+
+    function saveAccountInfo(e) {
+      e.preventDefault();
+      if (!currentUser) return;
+
+      const updatedUser = {
+        ...currentUser,
+        nama: document.getElementById('akun-nama').value.trim(),
+        username: document.getElementById('akun-user').value.trim(),
+        password: document.getElementById('akun-password').value.trim(),
+        nip: document.getElementById('akun-nip').value.trim(),
+        namaAtasan: document.getElementById('akun-nama-atasan').value.trim(),
+        nipAtasan: document.getElementById('akun-nip-atasan').value.trim()
+      };
+
+      currentUser = updatedUser;
+      localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(currentUser));
+
+      // Update di array users juga
+      const users = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS)) || [];
+      const idx = users.findIndex(u => u.id === currentUser.id);
+      if (idx !== -1) {
+        users[idx] = currentUser;
+        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+      }
+
+      document.getElementById('header-subtitle').textContent = currentUser.nama;
+      populateAccountForm();
+      renderRekap();
+      showToast('Informasi akun & identitas atasan berhasil diperbarui!', 'success');
+    }
+
+    function confirmLogout() {
+      showConfirmModal(
+        'Keluar dari Aplikasi?',
+        'Anda harus login kembali untuk mengakses jurnal pengawas.',
+        () => {
+          localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+          currentUser = null;
+          showAuthScreen();
+          showToast('Anda telah keluar dari aplikasi.', 'info');
+        }
+      );
+    }
+
+    // ==================== HELPER & UI UTILITIES ====================
+    function togglePasswordVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.innerHTML = `<i data-lucide="eye-off" class="w-4 h-4"></i>`;
+      } else {
+        input.type = 'password';
+        btn.innerHTML = `<i data-lucide="eye" class="w-4 h-4"></i>`;
+      }
+      lucide.createIcons();
+    }
+
+    function formatIndonesianFullDate(isoDateStr) {
+      if (!isoDateStr) return '-';
+      const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+      const months = [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      ];
+      const [y, m, d] = isoDateStr.split('-').map(Number);
+      const dateObj = new Date(y, m - 1, d);
+      const dayName = days[dateObj.getDay()];
+      return `${dayName}, ${d} ${months[m - 1]} ${y}`;
+    }
+
+    function formatIndonesianDateOnly(isoDateStr) {
+      const months = [
+        'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+        'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+      ];
+      const [y, m, d] = isoDateStr.split('-').map(Number);
+      return `${d} ${months[m - 1]} ${y}`;
+    }
+
+    function escapeHTML(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const bgColors = {
+        success: 'bg-[#006837] text-white border-emerald-400',
+        error: 'bg-red-600 text-white border-red-400',
+        info: 'bg-slate-800 text-white border-slate-600'
+      };
+      const iconName = type === 'success' ? 'check-circle' : (type === 'error' ? 'alert-circle' : 'info');
+
+      toast.className = `${bgColors[type] || bgColors.info} px-4 py-3 rounded-2xl shadow-xl border text-xs font-semibold flex items-center gap-2.5 fade-in pointer-events-auto`;
+      toast.innerHTML = `
+        <i data-lucide="${iconName}" class="w-4 h-4 shrink-0"></i>
+        <span class="flex-1">${escapeHTML(message)}</span>
+      `;
+      container.appendChild(toast);
+      lucide.createIcons();
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-6px)';
+        toast.style.transition = 'all 0.25s ease';
+        setTimeout(() => toast.remove(), 250);
+      }, 3200);
+    }
+
+    function showConfirmModal(title, message, onConfirm) {
+      const modalContainer = document.getElementById('modal-container');
+      const modalBox = document.getElementById('modal-box');
+      modalBox.innerHTML = `
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-2xl bg-orange-100 text-[#F57C00] flex items-center justify-center shrink-0">
+            <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h4 class="font-bold text-sm text-slate-800">${escapeHTML(title)}</h4>
+            <p class="text-xs text-slate-500 mt-0.5">${escapeHTML(message)}</p>
+          </div>
+        </div>
+        <div class="flex gap-2 mt-4">
+          <button id="modal-cancel-btn" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs transition">
+            Batal
+          </button>
+          <button id="modal-confirm-btn" class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs transition">
+            Ya, Lanjutkan
+          </button>
+        </div>
+      `;
+      modalContainer.classList.remove('hidden');
+      lucide.createIcons();
+
+      document.getElementById('modal-cancel-btn').onclick = () => {
+        modalContainer.classList.add('hidden');
+      };
+      document.getElementById('modal-confirm-btn').onclick = () => {
+        modalContainer.classList.add('hidden');
+        if (typeof onConfirm === 'function') onConfirm();
+      };
+    }
+  </script>
+</body>
+</html>
